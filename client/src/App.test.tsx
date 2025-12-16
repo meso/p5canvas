@@ -43,11 +43,15 @@ describe("App Integration", () => {
 		expect(screen.queryByTestId("game-view")).not.toBeInTheDocument();
 	});
 
-	it("handles generation flow", async () => {
-		const mockConfig = { gameType: "breakout", ballSpeed: 10 };
+	it('handles generation flow', async () => {
+		const mockConfig = {
+			initialState: { x: 0 },
+			update: "state.x++",
+			draw: "p.circle(state.x, 0, 10)"
+		};
 		(global.fetch as any).mockResolvedValueOnce({
 			ok: true,
-			json: async () => mockConfig,
+			json: async () => mockConfig
 		});
 
 		render(<App />);
@@ -63,7 +67,7 @@ describe("App Integration", () => {
 			expect(screen.getByTestId("game-view")).toBeInTheDocument();
 		});
 
-		expect(screen.getByTestId("game-view")).toHaveTextContent('ballSpeed":10');
+		expect(screen.getByTestId("game-view")).toHaveTextContent('"x":0');
 		expect(global.fetch).toHaveBeenCalledWith(
 			"/api/generate",
 			expect.objectContaining({
@@ -80,7 +84,7 @@ describe("App Integration", () => {
 		});
 
 		render(<App />);
-		const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => {});
+		const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => { });
 
 		fireEvent.click(screen.getByTestId("submit-btn"));
 

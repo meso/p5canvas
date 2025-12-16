@@ -26,12 +26,9 @@ describe("P5Canvas API", () => {
 				{
 					message: {
 						content: JSON.stringify({
-							gameType: "breakout",
-							ballSpeed: 5,
-							paddleWidth: 100,
-							blockRows: 3,
-							enemyColor: "red",
-							difficulty: "easy",
+							initialState: { score: 0 },
+							update: "state.score++",
+							draw: "p.text(state.score, 10, 10)",
 						}),
 					},
 				},
@@ -55,8 +52,9 @@ describe("P5Canvas API", () => {
 		await waitOnExecutionContext(ctx);
 
 		expect(response.status).toBe(200);
-		const data = await response.json();
-		expect(data).toHaveProperty("ballSpeed", 5);
+		const data: any = await response.json();
+		expect(data).toHaveProperty("initialState");
+		expect(data.initialState).toHaveProperty("score", 0);
 
 		fetchSpy.mockRestore();
 	});

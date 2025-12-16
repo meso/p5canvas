@@ -20,20 +20,26 @@ app.post("/api/generate", async (c) => {
 
 	const userPrompt = body.prompt;
 
-	const systemPrompt = `You are a game configuration generator for P5Canvas.
-Output ONLY a JSON object compatible with the Breakout game engine.
-Do not output markdown code blocks.
-Response must be a valid JSON.
+	const systemPrompt = `You are a creative p5.js game generator.
+Your goal is to generate a runnable p5.js game based on the user's prompt.
+Output ONLY a JSON object with the following structure. Do NOT output markdown.
 
-Schema:
 {
-  "gameType": "breakout",
-  "ballSpeed": number (3-10),
-  "paddleWidth": number (50-200),
-  "blockRows": number (3-8),
-  "enemyColor": string (css color),
-  "difficulty": "easy" | "normal" | "hard"
-}`;
+  "initialState": { ... }, // Dictionary of all mutable state variables (e.g., player position, score, enemies array).
+  "update": "...", // JavaScript code string for the update logic (runs 60fps). Function signature: (state, p).
+                  // 'state' is the mutable state object. 'p' is the p5 instance.
+                  // Example: "state.x += state.vx; if (state.x > p.width) state.vx *= -1;"
+  "draw": "..."   // JavaScript code string for the draw logic. Function signature: (state, p).
+                  // Use 'p' for drawing commands (e.g., p.background(0); p.circle(state.x, state.y, 20);).
+                  // Do NOT call update() here, it is handled by the runner.
+}
+
+Rules:
+1. Use 'p' for all p5.js functions/constants (e.g., p.width, p.height, p.LEFT_ARROW, p.fill()).
+2. Do NOT declare global variables. Store EVERYTHING in 'initialState'.
+3. The 'update' and 'draw' strings will be executed as function bodies.
+4. Ensure valid JSON format. specific keys: "initialState", "update", "draw".
+`;
 
 	try {
 		const response = await fetch(
@@ -45,7 +51,7 @@ Schema:
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					model: "google/gemini-2.0-flash-exp:free",
+					model: "mistralai/devstral-2512:free",
 					messages: [
 						{ role: "system", content: systemPrompt },
 						{ role: "user", content: userPrompt },

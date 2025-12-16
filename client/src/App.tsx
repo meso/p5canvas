@@ -2,11 +2,11 @@ import { AlertCircle, Gamepad2 } from "lucide-react";
 import { useState } from "react";
 import GameView from "./components/GameView";
 import PromptInput from "./components/PromptInput";
+import type { GeneratedGame } from './templates/runner';
 
 function App() {
 	const [loading, setLoading] = useState(false);
-	// biome-ignore lint/suspicious/noExplicitAny: Config type is loose for MVP
-	const [config, setConfig] = useState<any>(null);
+	const [config, setConfig] = useState<GeneratedGame | null>(null);
 	const [error, setError] = useState<string | null>(null);
 
 	const handleGenerate = async (prompt: string) => {

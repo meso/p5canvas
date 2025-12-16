@@ -1,19 +1,9 @@
 import { Sandpack } from "@codesandbox/sandpack-react";
 import type React from "react";
-import { BREAKOUT_CODE } from "../templates/breakout";
-
-interface GameConfig {
-	gameType?: string;
-	ballSpeed?: number;
-	paddleWidth?: number;
-	blockRows?: number;
-	enemyColor?: string;
-	difficulty?: string;
-	[key: string]: unknown;
-}
+import { generateIndexJs, type GeneratedGame } from "../templates/runner";
 
 interface GameViewProps {
-	config: GameConfig;
+	config: GeneratedGame; // Renamed from config to generic, but keeping prop name
 }
 
 const INDEX_HTML = `<!DOCTYPE html>
@@ -28,9 +18,13 @@ const INDEX_HTML = `<!DOCTYPE html>
 </html>`;
 
 const GameView: React.FC<GameViewProps> = ({ config }) => {
+	// Generate the full p5.js code string from the config (which contains code fragments)
+	const indexJsCode = generateIndexJs(config);
+
 	const files = {
 		"/index.html": INDEX_HTML,
-		"/index.js": BREAKOUT_CODE,
+		"/index.js": indexJsCode,
+		// We can still keep config.json for debugging transparency if we want
 		"/config.json": JSON.stringify(config, null, 2),
 	};
 
@@ -42,7 +36,7 @@ const GameView: React.FC<GameViewProps> = ({ config }) => {
 				files={files}
 				options={{
 					showNavigator: false,
-					showTabs: false, // Hide tabs to make it look like a game
+					showTabs: false,
 					externalResources: [
 						"https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js",
 					],
@@ -51,9 +45,6 @@ const GameView: React.FC<GameViewProps> = ({ config }) => {
 						"sp-wrapper": "!h-full",
 						"sp-preview": "!h-full",
 					},
-				}}
-				customSetup={{
-					dependencies: {},
 				}}
 			/>
 		</div>

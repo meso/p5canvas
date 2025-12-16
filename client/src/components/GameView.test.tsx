@@ -15,15 +15,19 @@ vi.mock("@codesandbox/sandpack-react", () => ({
 	)),
 }));
 
-describe("GameView", () => {
-	it("renders sandpack with correct files", () => {
-		const config = { gameType: "breakout", ballSpeed: 5 };
+describe('GameView', () => {
+	it('renders sandpack with correct files', () => {
+		const config = {
+			initialState: { score: 0 },
+			update: "state.score++",
+			draw: "p.text(state.score, 10, 10)"
+		};
 		render(<GameView config={config} />);
 
-		expect(screen.getByTestId("sandpack-mock")).toBeInTheDocument();
-		// Should have index.html, index.js, and config.json
-		expect(screen.getByTestId("file-/index.html")).toBeInTheDocument();
-		expect(screen.getByTestId("file-/index.js")).toBeInTheDocument();
-		expect(screen.getByTestId("file-/config.json")).toBeInTheDocument();
+		expect(screen.getByTestId('sandpack-mock')).toBeInTheDocument();
+		// Should have index.html, index.js
+		expect(screen.getByTestId('file-/index.html')).toBeInTheDocument();
+		expect(screen.getByTestId('file-/index.js')).toBeInTheDocument();
+		expect(screen.getByTestId('file-/config.json')).toBeInTheDocument();
 	});
 });

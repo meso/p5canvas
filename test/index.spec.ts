@@ -59,6 +59,82 @@ describe("P5Canvas API", () => {
 		fetchSpy.mockRestore();
 	});
 
-	// We can't easily test success without mocking LLM yet,
-	// but we can test that the route exists and validates input.
+	it("POST /api/generate handles upstream API 500 error", async () => {
+		const fetchSpy = vi
+			.spyOn(globalThis, "fetch")
+			.mockResolvedValue(new Response("Internal Server Error", { status: 500 }));
+
+		const request = new Request("http://example.com/api/generate", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ prompt: "Test game" }),
+		});
+		const ctx = createExecutionContext();
+		const testEnv = { ...env, OPENROUTER_API_KEY: "test-key" };
+		const response = await worker.fetch(request, testEnv, ctx);
+		await waitOnExecutionContext(ctx);
+
+		expect(response.status).toBe(500);
+		const data: any = await response.json();
+		expect(data).toHaveProperty("error", "LLM API Error");
+
+		fetchSpy.mockRestore();
+	});
+
+	it("POST /api/generate handles invalid JSON from upstream", async () => {
+		const mockOpenRouterResponse = {
+			choices: [
+				{
+					message: {
+						content: "This is not JSON",
+					},
+				},
+			],
+		};
+
+		const fetchSpy = vi
+			.spyOn(globalThis, "fetch")
+			.mockResolvedValue(new Response(JSON.stringify(mockOpenRouterResponse)));
+
+		const request = new Request("http://example.com/api/generate", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ prompt: "Test game" }),
+		});
+		const ctx = createExecutionContext();
+		const response = await worker.fetch(request, { ...env, OPENROUTER_API_KEY: "k" }, ctx);
+		await waitOnExecutionContext(ctx);
+
+		expect(response.status).toBe(500); // Or 200 with error? Logic says: console.error and return c.json({error: "Internal..."})?
+		// Reviewing code: index.tsx catches JSON.parse error and returns 500.
+		const data: any = await response.json();
+		expect(data).toHaveProperty("error", "Internal Server Error");
+
+		fetchSpy.mockRestore();
+	});
+
+	it("POST /api/generate handles empty choices from upstream", async () => {
+		const mockOpenRouterResponse = {
+			choices: [],
+		};
+
+		const fetchSpy = vi
+			.spyOn(globalThis, "fetch")
+			.mockResolvedValue(new Response(JSON.stringify(mockOpenRouterResponse)));
+
+		const request = new Request("http://example.com/api/generate", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ prompt: "Test game" }),
+		});
+		const ctx = createExecutionContext();
+		const response = await worker.fetch(request, { ...env, OPENROUTER_API_KEY: "k" }, ctx);
+		await waitOnExecutionContext(ctx);
+
+		expect(response.status).toBe(500);
+		const data: any = await response.json();
+		expect(data).toHaveProperty("error", "Empty response from LLM");
+
+		fetchSpy.mockRestore();
+	});
 });

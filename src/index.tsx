@@ -39,6 +39,10 @@ Rules:
 2. Do NOT declare global variables. Store EVERYTHING in 'initialState'.
 3. The 'update' and 'draw' strings will be executed as function bodies.
 4. Ensure valid JSON format. specific keys: "initialState", "update", "draw".
+5. USE EMOJIS for visual elements! Instead of plain circles or rects, use p.text("🍎", x, y) or "🚀". It makes games fun!
+6. For user interaction, you can optionally include "mousePressed" or "keyPressed" strings in the JSON.
+   - "mousePressed": Code to run when mouse is clicked. (e.g., "if (state.gameOver) initGame();")
+   - "keyPressed": Code to run when a key is pressed. (e.g., "if (p.keyCode === p.UP_ARROW) state.dir = 'up';")
 `;
 
 	try {

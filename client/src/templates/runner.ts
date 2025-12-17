@@ -6,6 +6,10 @@ export interface GeneratedGame {
   initialState: Record<string, any>;
   update: string; // Function body: (state, p) => void
   draw: string;   // Function body: (state, p) => void
+  mousePressed?: string; // Optional function body: (state, p) => void
+  keyPressed?: string;   // Optional function body: (state, p) => void
+  touchStarted?: string; // Optional function body: (state, p) => void
+  touchEnded?: string;   // Optional function body: (state, p) => void
 }
 
 export const createSketch = (game: GeneratedGame) => {
@@ -16,10 +20,8 @@ export const createSketch = (game: GeneratedGame) => {
     let error: Error | null = null;
 
     p.setup = () => {
-      // Create a responsive canvas
-      // We'll rely on the parent container to size it, or just use window size for now
-      // Since Sandpack iframe is small, windowWidth/Height works well usually
-      p.createCanvas(p.windowWidth, p.windowHeight);
+      // Fixed 640x480 resolution (scaled by CSS)
+      p.createCanvas(640, 480);
 
       try {
         // Deep copy initial state to avoid mutation reference issues on restart
@@ -54,7 +56,9 @@ export const createSketch = (game: GeneratedGame) => {
         updateFunc(state, p);
 
         // Execute draw
+        p.push();
         drawFunc(state, p);
+        p.pop();
 
       } catch (e: any) {
         error = e;
@@ -63,82 +67,135 @@ export const createSketch = (game: GeneratedGame) => {
     };
 
     p.windowResized = () => {
-      p.resizeCanvas(p.windowWidth, p.windowHeight);
+      // No-op or custom resize logic if needed
     };
   };
 };
 
-// Helper to convert the sketch function to a string that can be injected into Sandpack
+// Helper to convert the sketch function to a string that can be injected into Sandpack 
 export const generateIndexJs = (gameConfig: GeneratedGame) => {
-  // We need to inject the raw code strings into the template.
-  // Instead of importing createSketch (which isn't in Sandpack), 
-  // we will essentially "inline" the logic above into the string we return.
-
   // Serialize initialState
   const initialStateStr = JSON.stringify(gameConfig.initialState);
 
   return `
-let state = null;
-let updateFunc = null;
-let drawFunc = null;
-let error = null;
+new p5((p) => {
+  let state = null;
+  let updateFunc = null;
+  let drawFunc = null;
+  let error = null;
 
-const initialState = ${initialStateStr};
+  const initialState = ${initialStateStr};
 
-function setup() {
-  createCanvas(windowWidth, windowHeight);
-  
-  try {
-    state = JSON.parse(JSON.stringify(initialState));
+  p.setup = function() {
+    // Dynamic resolution filling the container strictly
+    // Use document.documentElement.clientWidth to get strict viewport width excluding scrollbars
+    const getWidth = () => Math.min(window.innerWidth, document.documentElement.clientWidth || window.innerWidth);
+    const getHeight = () => Math.min(window.innerHeight, document.documentElement.clientHeight || window.innerHeight);
+
+    p.createCanvas(getWidth(), getHeight());
+    p.frameRate(60);
     
-    // Create functions from generated bodies
-    updateFunc = new Function('state', 'p', \`${gameConfig.update.replace(/`/g, '\\`')}\`);
-    drawFunc = new Function('state', 'p', \`${gameConfig.draw.replace(/`/g, '\\`')}\`);
-    
-  } catch (e) {
-    error = e;
-    console.error("Setup Error:", e);
-  }
-}
+    // Safety resize after a momentary delay
+    setTimeout(() => {
+       p.resizeCanvas(getWidth(), getHeight());
+    }, 100);
 
-function draw() {
-  if (error) {
-    background(50, 0, 0);
-    fill(255);
-    textSize(16);
-    text("Runtime Error:\\n" + error.message, 20, 40);
-    noLoop();
-    return;
-  }
+    try {
+      // Deep copy initial state
+      state = JSON.parse(JSON.stringify(initialState));
 
-  try {
-    if (!state || !updateFunc || !drawFunc) return;
+      // Create functions from generated bodies
+      updateFunc = new Function('state', 'p', ${JSON.stringify(gameConfig.update)});
+      drawFunc = new Function('state', 'p', ${JSON.stringify(gameConfig.draw)});
+      
+      ${gameConfig.mousePressed ? `state.mousePressed = new Function('state', 'p', ${JSON.stringify(gameConfig.mousePressed)});` : ''}
+      ${gameConfig.keyPressed ? `state.keyPressed = new Function('state', 'p', ${JSON.stringify(gameConfig.keyPressed)});` : ''}
+      ${gameConfig.touchStarted ? `state.touchStarted = new Function('state', 'p', ${JSON.stringify(gameConfig.touchStarted)});` : ''}
+      ${gameConfig.touchEnded ? `state.touchEnded = new Function('state', 'p', ${JSON.stringify(gameConfig.touchEnded)});` : ''}
+      
+    } catch (e) {
+      error = e;
+      console.error("Setup Error:", e);
+    }
+  };
 
-    // In global mode, 'p' is technically 'window' or 'this', 
-    // but p5 functions are global.
-    // However, our generated code expects 'p' as an argument for instance mode compatibility.
-    // To support global mode Sandpack sketch, we can pass 'window' as 'p'.
-    // OR, better, we simply instruct the LLM to use 'p.' prefixes and we pass 'this' or a proxy.
-    // Actually, in global mode p5, 'width' is available, 'p.width' is not unless we define p.
-    
-    // WAIT. The system prompt instructs to use 'p.width'.
-    // So if we run in global mode (standard index.js), we need to define 'p'.
-    const p = window; 
-    
-    // Execute update
-    updateFunc(state, p);
+  p.draw = function() {
+    if (error) {
+      p.background(50, 0, 0);
+      p.fill(255);
+      p.textSize(16);
+      p.text("Runtime Error:\\n" + error.message, 20, 40);
+      p.noLoop();
+      return;
+    }
 
-    // Execute draw
-    drawFunc(state, p);
+    try {
+      if (!state || !updateFunc || !drawFunc) return;
+      
+      // Execute update
+      updateFunc(state, p);
+      
+      // Execute draw
+      p.push(); // Save style/transform state
+      drawFunc(state, p);
+      p.pop(); // Restore state to prevent leakage to next frame
 
-  } catch (e) {
-    error = e;
-    console.error("Runtime Error:", e);
-  }
-}
+    } catch (e) {
+      error = e;
+      console.error("Runtime Error:", e);
+    }
+  };
 
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-}
+  p.windowResized = function() {
+    const w = Math.min(window.innerWidth, document.documentElement.clientWidth || window.innerWidth);
+    const h = Math.min(window.innerHeight, document.documentElement.clientHeight || window.innerHeight);
+    p.resizeCanvas(w, h);
+  };
+
+  // Event handlers
+  p.mousePressed = function() {
+    if (state && typeof state.mousePressed === 'function') {
+      try {
+        state.mousePressed(state, p);
+      } catch (e) {
+        console.error("MousePressed Error:", e);
+      }
+    }
+  };
+
+  p.keyPressed = function() {
+    if (state && typeof state.keyPressed === 'function') {
+      try {
+        state.keyPressed(state, p);
+      } catch (e) {
+        console.error("KeyPressed Error:", e);
+      }
+    }
+  };
+
+  p.touchStarted = function() {
+    if (state && typeof state.touchStarted === 'function') {
+      try {
+        state.touchStarted(state, p);
+        return false; // prevent default behavior
+      } catch (e) {
+        console.error("TouchStarted Error:", e);
+      }
+    } else {
+      p.mousePressed();
+    }
+  };
+
+  p.touchEnded = function() {
+    if (state && typeof state.touchEnded === 'function') {
+      try {
+        state.touchEnded(state, p);
+        return false;
+      } catch (e) {
+        console.error("TouchEnded Error:", e);
+      }
+    }
+  };
+});
 `;
 };

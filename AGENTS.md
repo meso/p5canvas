@@ -1,20 +1,25 @@
 # Agent Guidelines
 
-## TDD (Test-Driven Development) Requirement
+## 指示と質問の分離
 
-All code changes, including bug fixes, new features, and minor adjustments, MUST follow the **t-wada style TDD** cycle:
+質問と判断すべきプロンプト（例えば「どうしてそうなってるの？」）に対しては、最初にまず回答をしてください。これを「それは間違ってるから修正せよ」という指示だと誤認してはいけません。もちろん勝手にコードの修正を始めてもいけません。
+とくに既存のコードを修正するときには、行き当たりばったりに対応するんじゃなくて、必ず現在のコードを読み込み直して根本原因を徹底的に調査して、対応方針を検討して説明し、合意を取ってから実装を始めること。
 
-1.  **Red**: Write a failing test case that reproduces the bug or defines the new feature.
-    - Do not write implementation code before the test fails.
-    - Ensure the test fails for the expected reason.
-2.  **Green**: Write the minimum amount of code necessary to make the test pass.
-    - Do not over-engineer.
-    - Focus solely on passing the test.
-3.  **Refactor**: Clean up the code while keeping the tests passing.
-    - Remove duplication.
-    - Improve readability.
+## 常に TDD (Test-Driven Development)
 
-**Strict Adherence**: This process is mandatory. Do not skip the "Red" phase even for "trivial" changes.
+全てのコードは、新規機能開発・バグ修正・小さな調整などにかかわらず、必ず **t-wada スタイルの TDD** のサイクルを経て書くこと。
+
+1.  **Red**: 失敗するテストケースを書く。バグの再現や新規機能の定義を含む。
+    - テストが失敗する前に実装コードを書かないこと。
+    - テストが失敗する理由を明確にすること。
+2.  **Green**: テストケースを満たす最小限の実装コードを書く。
+    - オーバーエンジニアリングしないこと。
+    - テストをパスすることだけに集中すること。
+3.  **Refactor**: コードを整理する。テストは満たしつづけること。
+    - 重複コードの削除
+    - コードの可読性の向上
+
+**厳守**: このプロセスは必須です。たとえ些細な変更であっても「Red」フェーズをスキップしてはいけません。
 
 ## Lint と型チェックについて
 

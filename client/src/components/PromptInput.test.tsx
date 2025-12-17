@@ -30,4 +30,18 @@ describe("PromptInput", () => {
 		render(<PromptInput onSubmit={vi.fn()} isLoading={true} />);
 		expect(screen.getByRole("button", { name: /generating/i })).toBeDisabled();
 	});
+
+	it("does not call onSubmit when input is empty", () => {
+		const handleSubmit = vi.fn();
+		render(<PromptInput onSubmit={handleSubmit} />);
+
+		const button = screen.getByRole("button", { name: /generate/i });
+		expect(button).toBeDisabled();
+
+		// Try forcing form submission
+		const form = button.closest('form');
+		if (form) fireEvent.submit(form);
+
+		expect(handleSubmit).not.toHaveBeenCalled();
+	});
 });

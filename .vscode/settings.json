@@ -1,5 +1,11 @@
 {
 	"files.associations": {
 		"wrangler.json": "jsonc"
+	},
+	"files.exclude": {
+		"**/node_modules": true
+	},
+	"search.exclude": {
+		"**/node_modules": true
 	}
 }

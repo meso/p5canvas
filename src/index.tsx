@@ -48,8 +48,16 @@ Rules:
 10. IMPORTANT: Only store DATA in initialState (numbers, strings, booleans, arrays, objects). NEVER store functions in initialState. Write all logic inline in 'setup', 'update', or 'draw' code strings.
 11. NEVER define helper functions (like spawnFood(), movePlayer(), etc.). Write all code inline directly where it's needed. If you need to repeat logic, copy the code inline each time.
 12. CRITICAL: ALWAYS call p.background() at the start of 'draw' to clear the previous frame. Use bright colors like p.background(20, 20, 40) for dark blue, p.background(135, 206, 235) for sky blue, etc. NEVER use black (0) background.
-13. CRITICAL: For sprites, prefer sprite.color over sprite.image for better visibility and reliability. Use BRIGHT colors: 'white', 'red', 'blue', 'yellow', 'cyan', 'magenta'. Emojis can be used for decoration but color is more reliable.
+13. CRITICAL: For sprites, choose between sprite.image (emojis) and sprite.color (solid colors) based on visual meaning:
+   - USE EMOJI SPRITES (sprite.image = '🍎') for: food, characters, animals, objects with recognizable real-world form
+   - USE COLOR SPRITES (sprite.color = 'cyan') for: abstract shapes, geometric elements, walls, paddles, balls, blocks
+   - ALWAYS use BRIGHT colors when using sprite.color: 'white', 'red', 'blue', 'yellow', 'cyan', 'magenta', 'lime'
 14. TABLET-FRIENDLY: Design for touch input. Use 'started' state flag for tap-to-start. Add in initialState: "started": false. Check p.mouse.presses() in update to set started = true. Show "TAP TO START" message in draw when !started. Pause game logic when !started.
+15. GRID-BASED MOVEMENT: For games with discrete grid movement (snake, sokoban, grid puzzles):
+   - Use p.frameCount % N === 0 to control movement timing (e.g., N=8 for moderate speed, N=12 for slow)
+   - Store grid position in state and calculate pixel position: sprite.x = gridX * gridSize + gridSize/2
+   - For collision detection on grids, compare grid coordinates OR use distance: p.abs(sprite1.x - sprite2.x) < gridSize/2 && p.abs(sprite1.y - sprite2.y) < gridSize/2
+   - For snake-like games: store segments in array, use unshift() to add head at start, pop() to remove tail from end
 
 Example 1: Apple Catcher
 {
@@ -84,19 +92,14 @@ Example 4: Block Breaker with Tap-to-Start
 }
 
 Important Notes:
-- Always create new p.Canvas() in setup with DYNAMIC size: new p.Canvas(p.windowWidth, p.windowHeight)
-- Set p.world.gravity.y = 0 for games without gravity, p.world.gravity.y = 10 for platformers
-- Store all sprites in state object
-- Use p.kb.pressing('key') for continuous key check, p.kb.presses('key') for single press
-- Collider combinations for physics-based games (breakout, pong):
-  * Ball: collider = 'dynamic', bounciness = 1, friction = 0, mass = 1
-  * Paddle/Walls/Blocks: collider = 'static' (immovable, automatically bounces dynamic objects)
-  * This ensures proper physics-based collision and bouncing
-- For simple games without physics, use collider = 'kinematic' and manually control movement
-- Use sprite.collides(target) returns true on first collision frame
-- Use sprite.colliding(target) returns frame count while colliding (0 if not)
-- ALWAYS set sprite.color to a BRIGHT color (e.g., 'white', 'red', 'blue', 'yellow', 'cyan', 'magenta')
-- For invisible walls/boundaries, set sprite.visible = false
+- Canvas: Always create with DYNAMIC size: new p.Canvas(p.windowWidth, p.windowHeight)
+- Gravity: Set p.world.gravity.y = 0 for top-down games, = 10 for platformers
+- Input: p.kb.pressing('key') for continuous, p.kb.presses('key') for single press
+- Collision: sprite.collides(target) returns true on first frame, sprite.colliding(target) returns frame count
+- Physics colliders: dynamic (ball) + static (paddle/walls) = automatic bouncing. Set bounciness=1, friction=0 for perfect bounce
+- Manual colliders: kinematic for games without physics simulation
+- Colors: Use BRIGHT colors (white, red, cyan, lime, yellow) never dark/black
+- Invisible sprites: Set sprite.visible = false for boundaries
 `;
 
 	try {

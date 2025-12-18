@@ -4,6 +4,7 @@
 
 export interface GeneratedGame {
   initialState: Record<string, any>;
+  setup: string;  // Function body: (state, p) => void - Sprite initialization
   update: string; // Function body: (state, p) => void
   draw: string;   // Function body: (state, p) => void
   mousePressed?: string; // Optional function body: (state, p) => void
@@ -72,7 +73,7 @@ export const createSketch = (game: GeneratedGame) => {
   };
 };
 
-// Helper to convert the sketch function to a string that can be injected into Sandpack 
+// Helper to convert the sketch function to a string that can be injected into Sandpack
 export const generateIndexJs = (gameConfig: GeneratedGame) => {
   // Serialize initialState
   const initialStateStr = JSON.stringify(gameConfig.initialState);
@@ -82,6 +83,7 @@ new p5((p) => {
   let state = null;
   let updateFunc = null;
   let drawFunc = null;
+  let setupFunc = null;
   let error = null;
 
   const initialState = ${initialStateStr};
@@ -92,27 +94,35 @@ new p5((p) => {
     const getWidth = () => Math.min(window.innerWidth, document.documentElement.clientWidth || window.innerWidth);
     const getHeight = () => Math.min(window.innerHeight, document.documentElement.clientHeight || window.innerHeight);
 
-    p.createCanvas(getWidth(), getHeight());
-    p.frameRate(60);
-    
-    // Safety resize after a momentary delay
-    setTimeout(() => {
-       p.resizeCanvas(getWidth(), getHeight());
-    }, 100);
-
     try {
+      // Check if p5play is loaded
+      if (typeof p.Sprite === 'undefined') {
+        throw new Error('p5play library not loaded');
+      }
+
+      // Cleanup existing sprites
+      if (p.allSprites) {
+        p.allSprites.removeAll();
+      }
+
+      p.frameRate(60);
+
       // Deep copy initial state
       state = JSON.parse(JSON.stringify(initialState));
+
+      // Create setup function and execute it (LLM creates Canvas here)
+      setupFunc = new Function('state', 'p', ${JSON.stringify(gameConfig.setup)});
+      setupFunc(state, p);
 
       // Create functions from generated bodies
       updateFunc = new Function('state', 'p', ${JSON.stringify(gameConfig.update)});
       drawFunc = new Function('state', 'p', ${JSON.stringify(gameConfig.draw)});
-      
+
       ${gameConfig.mousePressed ? `state.mousePressed = new Function('state', 'p', ${JSON.stringify(gameConfig.mousePressed)});` : ''}
       ${gameConfig.keyPressed ? `state.keyPressed = new Function('state', 'p', ${JSON.stringify(gameConfig.keyPressed)});` : ''}
       ${gameConfig.touchStarted ? `state.touchStarted = new Function('state', 'p', ${JSON.stringify(gameConfig.touchStarted)});` : ''}
       ${gameConfig.touchEnded ? `state.touchEnded = new Function('state', 'p', ${JSON.stringify(gameConfig.touchEnded)});` : ''}
-      
+
     } catch (e) {
       error = e;
       console.error("Setup Error:", e);

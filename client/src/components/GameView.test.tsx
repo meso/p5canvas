@@ -24,7 +24,7 @@ vi.mock("@codesandbox/sandpack-react", () => ({
 
 describe('GameView', () => {
 	it('renders with Game tab active by default (Preview visible, Editor hidden)', () => {
-		const config = { initialState: {}, update: "", draw: "" };
+		const config = { initialState: {}, setup: "", update: "", draw: "" };
 		render(<GameView config={config} />);
 
 		// Check for Provider
@@ -40,7 +40,7 @@ describe('GameView', () => {
 	});
 
 	it('switches to Code view when tab is clicked', async () => {
-		const config = { initialState: {}, update: "", draw: "" };
+		const config = { initialState: {}, setup: "", update: "", draw: "" };
 		const { user } = render(<GameView config={config} />);
 
 		// Click Code tab
@@ -55,7 +55,7 @@ describe('GameView', () => {
 	});
 
 	it('enforces fixed height on container', () => {
-		const config = { initialState: {}, update: "", draw: "" };
+		const config = { initialState: {}, setup: "", update: "", draw: "" };
 		render(<GameView config={config} />);
 
 		const container = screen.getByTestId('game-view-container');
@@ -63,7 +63,7 @@ describe('GameView', () => {
 	});
 
 	it('passes correct options to SandpackProvider', () => {
-		const config = { initialState: {}, update: "", draw: "" };
+		const config = { initialState: {}, setup: "", update: "", draw: "" };
 		render(<GameView config={config} />);
 
 		const optionsDiv = screen.getByTestId('sp-options');
@@ -71,7 +71,7 @@ describe('GameView', () => {
 
 		// Classes should still be there for height control
 		expect(options.classes["sp-layout"]).toContain("!h-full");
-		expect(options.externalResources).toContain("https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js");
+		expect(options.externalResources).toContain("https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js");
 	});
 });
 

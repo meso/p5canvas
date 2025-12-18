@@ -5,6 +5,7 @@ describe('generateIndexJs', () => {
   it('should include touch/key event handlers if provided in config', () => {
     const game: GeneratedGame = {
       initialState: {},
+      setup: '',
       update: '',
       draw: '',
       touchStarted: 'console.log("touch")',
@@ -25,6 +26,7 @@ describe('generateIndexJs', () => {
   it('should generate Instance Mode code to avoid globals', () => {
     const game: GeneratedGame = {
       initialState: {},
+      setup: '',
       update: '',
       draw: ''
     };
@@ -41,8 +43,8 @@ describe('generateIndexJs', () => {
     expect(code).toContain('p.push();');
     expect(code).toContain('drawFunc(state, p)');
     expect(code).toContain('p.pop();');
-    // Check for p.createCanvas usage with new dynamic sizing
-    expect(code).toContain('p.createCanvas(getWidth(), getHeight())');
+    // Canvas is now created by LLM in setup, not by runner
+    expect(code).toContain('setupFunc(state, p)');
     // Check for frameRate cap
     expect(code).toContain('p.frameRate(60)');
   });
@@ -50,6 +52,7 @@ describe('generateIndexJs', () => {
   it('should correctly handle template literals in function bodies', () => {
     const game: GeneratedGame = {
       initialState: { score: 10 },
+      setup: '',
       update: 'console.log(`Score: ${state.score}`)',
       draw: ''
     };

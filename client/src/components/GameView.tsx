@@ -15,7 +15,6 @@ interface GameViewProps {
 const INDEX_HTML = `<!DOCTYPE html>
 <html lang="en">
   <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <style>
       html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; }
       canvas { display: block; position: absolute; top: 0; left: 0; outline: none; }
@@ -23,7 +22,6 @@ const INDEX_HTML = `<!DOCTYPE html>
   </head>
   <body>
     <script src="index.js"></script>
-    <script src="consoleHook.js"></script>
   </body>
 </html>
 `;
@@ -41,7 +39,9 @@ const GameView: React.FC<GameViewProps> = ({ config }) => {
   const options = React.useMemo(() => ({
     activeFile: "/index.js",
     externalResources: [
-      "https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js",
+      "https://cdn.jsdelivr.net/npm/p5@1.11.4/lib/p5.js",
+      "https://p5play.org/v3/planck.min.js",
+      "https://p5play.org/v3/p5play.js"
     ],
     classes: {
       "sp-layout": "!h-full",
@@ -85,8 +85,8 @@ const GameView: React.FC<GameViewProps> = ({ config }) => {
         </div>
 
         <div className="absolute top-12 bottom-0 left-0 right-0">
-          <SandpackLayout className="!h-full !border-none" style={{ height: '100%' }}>
-            {viewMode === 'game' ? (
+          <div className="absolute inset-0" style={{ zIndex: viewMode === 'game' ? 1 : 0, opacity: viewMode === 'game' ? 1 : 0, pointerEvents: viewMode === 'game' ? 'auto' : 'none' }}>
+            <SandpackLayout className="!h-full !border-none" style={{ height: '100%' }}>
               <SandpackPreview
                 showNavigator={false}
                 showOpenInCodeSandbox={false}
@@ -95,7 +95,10 @@ const GameView: React.FC<GameViewProps> = ({ config }) => {
                 className="!h-full"
                 style={{ height: '100%' }}
               />
-            ) : (
+            </SandpackLayout>
+          </div>
+          <div className="absolute inset-0" style={{ zIndex: viewMode === 'code' ? 1 : 0, opacity: viewMode === 'code' ? 1 : 0, pointerEvents: viewMode === 'code' ? 'auto' : 'none' }}>
+            <SandpackLayout className="!h-full !border-none" style={{ height: '100%' }}>
               <SandpackCodeEditor
                 showTabs
                 showLineNumbers
@@ -105,8 +108,8 @@ const GameView: React.FC<GameViewProps> = ({ config }) => {
                 className="!h-full"
                 style={{ height: '100%' }}
               />
-            )}
-          </SandpackLayout>
+            </SandpackLayout>
+          </div>
         </div>
       </SandpackProvider>
     </div>
